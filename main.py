@@ -19,6 +19,13 @@ RED = (200, 100, 100)
 font = pygame.font.SysFont(None, 28)
 large_font = pygame.font.SysFont(None, 48)
 
+# Carregar imagens
+fundo_img = pygame.image.load("cenario.png")
+fundo_img = pygame.transform.scale(fundo_img, (WIDTH, HEIGHT))
+
+personagem_img = pygame.image.load("personagem.png")
+personagem_img = pygame.transform.scale(personagem_img, (300, 400))
+
 # Barras de status e história
 status = {
     "Ciência": 50,
@@ -83,23 +90,23 @@ class Card:
         self.nao = data["nao"]
         self.explicacao = data.get("explicacao", "")
         self.contexto = data.get("contexto", "")
-        
+
     def draw(self, surface):
-        pygame.draw.rect(surface, GRAY, (150, 150, 500, 250))
-        
-        if self.contexto:
-            contexto_lines = [self.contexto[i:i+60] for i in range(0, len(self.contexto), 60)]
-            for i, line in enumerate(contexto_lines):
-                text = font.render(line, True, BLACK)
-                surface.blit(text, (160, 170 + i*20))
-        
+        card_rect = pygame.Rect(150, 480, 780, 200)
+        pygame.draw.rect(surface, (230, 230, 230), card_rect, border_radius=12)
+
+        contexto_lines = [self.contexto[i:i + 70] for i in range(0, len(self.contexto), 70)]
+        for i, line in enumerate(contexto_lines):
+            text = font.render(line, True, BLACK)
+            surface.blit(text, (card_rect.x + 20, card_rect.y + 20 + i * 20))
+
         text = font.render(self.pergunta, True, BLACK)
-        surface.blit(text, (160, 170 + len(contexto_lines)*20 + 20))
-        
+        surface.blit(text, (card_rect.x + 20, card_rect.y + 20 + len(contexto_lines) * 20 + 10))
+
         sim_text = font.render("[D] Sim", True, GREEN)
         nao_text = font.render("[A] Não", True, RED)
-        surface.blit(sim_text, (160, 170 + len(contexto_lines)*20 + 80))
-        surface.blit(nao_text, (600, 170 + len(contexto_lines)*20 + 80))
+        surface.blit(sim_text, (card_rect.x + 20, card_rect.y + 140))
+        surface.blit(nao_text, (card_rect.x + 650, card_rect.y + 140))
 
     def aplicar_decisao(self, escolha):
         efeitos = self.sim if escolha == "sim" else self.nao
@@ -116,7 +123,7 @@ def desenhar_barras():
         label = font.render(f"{nome}: {valor}", True, BLACK)
         screen.blit(label, (x, 25))
         x += 180
-    
+
     cap_text = font.render(f"Capítulo {historia['capitulo']}: {historia['objetivo']}", True, BLACK)
     screen.blit(cap_text, (50, 80))
 
@@ -132,7 +139,6 @@ def escolher_nova_carta(cartas, ultima_pergunta):
 
 def atualizar_historia():
     media = sum(status.values()) / len(status)
-    
     if media < 40:
         historia.update({
             "capitulo": 1,
@@ -173,11 +179,11 @@ def menu_inicial():
     titulo = large_font.render("Stone Reigns", True, BLACK)
     subtitulo = font.render("O Renascimento Científico", True, BLACK)
     instrucao = font.render("Pressione ENTER para começar", True, BLACK)
-    
-    screen.blit(titulo, (WIDTH//2 - titulo.get_width()//2, HEIGHT//2 - 60))
-    screen.blit(subtitulo, (WIDTH//2 - subtitulo.get_width()//2, HEIGHT//2 - 20))
-    screen.blit(instrucao, (WIDTH//2 - instrucao.get_width()//2, HEIGHT//2 + 20))
-    
+
+    screen.blit(titulo, (WIDTH // 2 - titulo.get_width() // 2, HEIGHT // 2 - 60))
+    screen.blit(subtitulo, (WIDTH // 2 - subtitulo.get_width() // 2, HEIGHT // 2 - 20))
+    screen.blit(instrucao, (WIDTH // 2 - instrucao.get_width() // 2, HEIGHT // 2 + 20))
+
     pygame.display.flip()
     esperando = True
     while esperando:
@@ -190,20 +196,19 @@ def menu_inicial():
 
 def fim_de_jogo():
     screen.fill(WHITE)
-    
     if any(valor == 0 for valor in status.values()):
         mensagem = "Sua vila não sobreviveu... A humanidade permanece na idade das trevas."
     else:
         mensagem = "Você liderou o renascimento científico! A civilização floresce novamente."
-    
+
     fim = large_font.render("Fim de jogo!", True, RED)
     msg = font.render(mensagem, True, BLACK)
     instrucao = font.render("Pressione R para reiniciar ou ESC para sair", True, BLACK)
-    
-    screen.blit(fim, (WIDTH//2 - fim.get_width()//2, HEIGHT//2 - 60))
-    screen.blit(msg, (WIDTH//2 - msg.get_width()//2, HEIGHT//2 - 20))
-    screen.blit(instrucao, (WIDTH//2 - instrucao.get_width()//2, HEIGHT//2 + 20))
-    
+
+    screen.blit(fim, (WIDTH // 2 - fim.get_width() // 2, HEIGHT // 2 - 60))
+    screen.blit(msg, (WIDTH // 2 - msg.get_width() // 2, HEIGHT // 2 - 20))
+    screen.blit(instrucao, (WIDTH // 2 - instrucao.get_width() // 2, HEIGHT // 2 + 20))
+
     pygame.display.flip()
     esperando = True
     while esperando:
@@ -237,18 +242,21 @@ ultima_pergunta = carta_atual
 explicacao_atual = ""
 
 while rodando:
-    screen.fill(WHITE)
+    screen.blit(fundo_img, (0, 0))
+    personagem_rect = personagem_img.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 50))
+    screen.blit(personagem_img, personagem_rect)
+
     desenhar_barras()
-    
+
     evento_especial = verificar_eventos()
     if evento_especial:
         carta_atual = evento_especial
-    
+
     carta_atual.draw(screen)
-    
+
     if explicacao_atual:
         explic_text = font.render(explicacao_atual, True, BLACK)
-        screen.blit(explic_text, (WIDTH//2 - explic_text.get_width()//2, 420))
+        screen.blit(explic_text, (WIDTH // 2 - explic_text.get_width() // 2, 690))
 
     for evento in pygame.event.get():
         if evento.type == pygame.QUIT:
@@ -266,7 +274,7 @@ while rodando:
                 ultima_pergunta = carta_atual
 
     atualizar_historia()
-    
+
     if any(valor == 0 or valor == 100 for valor in status.values()):
         fim_de_jogo()
         cartas = escolher_fase()
